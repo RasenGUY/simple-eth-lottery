@@ -2,13 +2,13 @@
 pragma solidity 0.8.2;
 
 import "@openzeppelin/contracts/access/Ownable.sol"; 
-import "@openzeppelin/contracts/security/ReentrancyGaurd.sol"; 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/PullPayment.sol";
 import "@openzeppelin/contracts/utils/Address.sol"; 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract Lottery is PullPayment, Ownable, ReentrancyGaurd {
+contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     
     using Counter for uint256;
     
@@ -19,16 +19,13 @@ contract Lottery is PullPayment, Ownable, ReentrancyGaurd {
         mapping(uint256 => address []) participants;
     }  
 
-    /// @notice lotery states
     enum LotteryStates { Active, Inactive }
 
-    /// @notice lottery variables 
     Lottery private lottery; 
     LotteryStates lotteryState;
     uint256 private ticketPrice;
     Counter private lotteryId; 
 
-    /// @notice events
     event ChangeLotteryState (LotteryStates indexed newState);
     event AnnounceWinner (address indexed winner);
     event Refund(address to, uint256 amount);
@@ -41,6 +38,7 @@ contract Lottery is PullPayment, Ownable, ReentrancyGaurd {
 
     modifier onlyCurrentWinner {
         require(lotery.winner[loteryId] == msg.sender);
+        _;
     }
 
     /// @dev buy a lottery ticket with this function 
@@ -74,7 +72,7 @@ contract Lottery is PullPayment, Ownable, ReentrancyGaurd {
     /// @dev calculates the winner of the lottery
     /// @param participantIndex index for blocknumbers list
     /// @param blockNumberIndex index for partipants list
-    function calculateWinner(uint256 participantIndex, blockNumberIndex) public 
+    function calculateWinner(uint256 participantIndex, uint256 blockNumberIndex) public 
     onlyActiveLottery {
         uint256 winnerIndex = generateRandomNumber(participantIndex, blockNumberIndex);
         lottery.winner[lotteryId] = lottery.participants[lotteryId][winnerIndex];
@@ -83,7 +81,7 @@ contract Lottery is PullPayment, Ownable, ReentrancyGaurd {
     }
 
     /// @dev checks whether lottery isOver
-    function isLotteryOver() returns (bool) {
+    function isLotteryOver() public view returns (bool) {
         if (block.timestamp * 1000 < lottery.deadlines[lotteryId] * 1000){
             return false;
         }
@@ -101,8 +99,8 @@ contract Lottery is PullPayment, Ownable, ReentrancyGaurd {
     /// @param participantIndex index for the participant array
     /// @param blockNumberIndex index for the blockNumber array
     function generateRandomNumber(
-        uint256 _partipantIndex, 
-        uint256 _blockNumberIndex) 
+        uint256 partipantIndex, 
+        uint256 blockNumberIndex) 
     private returns (uint indexWinner) {
         address randomParticipant = lottery.participants[lotteryId][participantIndex];
         bytes32 blHash = blockhash(lottery.blockNumbers[lotteryId][blockNumberIndex]); 
@@ -124,7 +122,7 @@ contract Lottery is PullPayment, Ownable, ReentrancyGaurd {
 
     /// @dev allows winner of current lottery to withdraw payment
     /// @param payee address of recipient to whom amount will be sent
-    function withdrawPayments(address payee) public override onlyCurrentWinner {
+    function withdrawPayments(address payee) public override onlyCurrentWinner nonReentrant {
         require(lotteryState == LotteryStates.Inactive, "Lotery: lottery still ongoing");
         _escrow.withdraw(payable(payee));
     }
