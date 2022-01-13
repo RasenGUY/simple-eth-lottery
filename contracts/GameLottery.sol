@@ -13,6 +13,7 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     using Counters for Counters.Counter;
     
     struct Lottery {
+        mapping(uint256 => uint256) startBlocks;
         mapping(uint256 => uint256) deadlines;
         mapping(uint256 => address) winner;
         mapping(uint256 => uint256 []) blockNumbers;
@@ -24,18 +25,20 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     enum LotteryStates { Active, Inactive }
 
     Lottery private lottery; 
-    uint256 private ticketPrice;
-    uint256 private maxTickets;
-    uint256 private maxUserTickets;  
-    
+
+    uint256 public maxTickets;
+    uint256 public maxUserTickets;  
+    uint256 public ticketPrice;
     LotteryStates public lotteryState;
     Counters.Counter public lotteryId;
     Counters.Counter public totalTickets; 
 
-    event ChangeLotteryState (LotteryStates indexed newState);
-    event AnnounceWinner (address indexed winner);
+    event ChangeLotteryState(LotteryStates indexed newState);
+    event AnnounceWinner(address indexed winner);
+    event BuyTicket(address buyer, uint256 lotteryId);
     event Refund(address to, uint256 amount);
     event TicketPriceChanged(uint256 price);
+    event CreateLottery(uint256 lotteryId);
 
     modifier onlyActiveLottery {
         require(lotteryState == LotteryStates.Active, "Lottery: inactive lottery");
@@ -54,14 +57,10 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     }
     
     /// @notice initialize the first loterry
-    constructor (uint256 _ticketPrice, uint256 _deadline, uint256 _maxTickets, uint256 _maxUserTickets){
-        maxTickets = _maxTickets;
-        maxUserTickets = _maxUserTickets; 
+    constructor() {
         lotteryId._value = 0;
-        ticketPrice = _ticketPrice * 10 ** 18;
-        lotteryState = LotteryStates.Active; 
-        lottery.deadlines[lotteryId._value] = _deadline;
-    } 
+        lotteryState = LotteryStates.Inactive; 
+    }
 
     /// @dev buy a lottery ticket with this function 
     /// @notice lottery has to be active for people to be able to ticket 
@@ -76,24 +75,31 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
             refundRest(msg.sender, rest);
             emit Refund(msg.sender, rest);
         }
-    }
-
-    /// @dev retrieves the ticket price 
-    function getPrice() external view returns (uint256) {
-        return ticketPrice; 
+        emit BuyTicket(msg.sender, lotteryId._value);
     }
 
     /// @dev actives the lottery 
-    /// @param deadline time after lottery should be closed
-    function newLottery(uint256 deadline, uint256 _maxTickets, uint256 _maxUserTickets) external onlyOwner {
-        require(lotteryState == LotteryStates.Inactive, "Lottery: lottery not inactive");
+    /// @param _deadline time after lottery should be closed
+    /// @param _ticketPrice price of the a ticket during the lottery
+    /// @param _maxTickets maximum amount of tickets to be sold during this lottery
+    /// @param _maxUserTickets maximum amount of tickets a user can buy during this lottery
+    /// @notice _returns lottery Id 
+    function newLottery (
+        uint256 _deadline, 
+        uint256 _ticketPrice, 
+        uint256 _maxTickets, 
+        uint256 _maxUserTickets) external onlyOwner {
+        require(lotteryState == LotteryStates.Inactive, "Lottery: lottery is still active");
         lotteryState = LotteryStates.Active;
         lotteryId.increment();
         maxTickets = _maxTickets;
         maxUserTickets = _maxUserTickets;
         totalTickets._value = 0;
-        lottery.deadlines[lotteryId._value] = block.number + 1 + deadline;
+        ticketPrice = _ticketPrice;
+        lottery.startBlocks[lotteryId._value] = block.number + 1;
+        lottery.deadlines[lotteryId._value] = block.number + 1 + _deadline;
         emit ChangeLotteryState(LotteryStates.Active);
+        emit CreateLottery(lotteryId._value);
     } 
 
     /// @dev calculates the winner of the lottery
@@ -101,11 +107,13 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     /// @param blockNumberIndex index for partipants list
     function calculateWinner(uint256 participantIndex, uint256 blockNumberIndex) public 
     onlyActiveLottery {
+        require(isLotteryOver(), "Lottery: lottery still running"); 
         uint256 winnerIndex = generateRandomNumber(participantIndex, blockNumberIndex);
-        lottery.winner[lotteryId._value] = lottery.participants[lotteryId._value][winnerIndex];
+        lottery.winner[lotteryId._value] = lottery.participants[lotteryId._value][winnerIndex]; // winner
         lotteryState = LotteryStates.Inactive;
         lottery.totalTicketsBought[lotteryId._value] = totalTickets._value; 
         _asyncTransfer(lottery.winner[lotteryId._value], address(this).balance);
+        emit AnnounceWinner(lottery.participants[lotteryId._value][winnerIndex]); 
     }
 
     /// @dev checks whether lottery isOver
@@ -119,10 +127,21 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     /// @dev allows owner of lottery to set price of the ticket
     /// @param price new price of a ticket
     function setPrice(uint256 price) external onlyOwner {
+        require(lotteryState == LotteryStates.Inactive, "Lottery: cannot change price of an active lottery");
         ticketPrice = price;
         emit TicketPriceChanged(price); 
     } 
 
+    /// @dev retrieves lottery deadline
+    function deadline() public view returns(uint256) {
+        return lottery.deadlines[lotteryId._value];
+    }
+
+    /// @dev returns start block of current lottery if gameStarted
+    function startBlock() public view returns (uint256 _startBlock){
+        _startBlock = lotteryId._value != 0 ? lottery.startBlocks[lotteryId._value] : 0;
+    }
+    
     /// @dev generates a pseudo random number 
     /// @param participantIndex index for the participant array
     /// @param blockNumberIndex index for the blockNumber array
@@ -138,7 +157,7 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     /// @dev calculate rest amount of eth to send back to users
     /// @param value amount the user will pay with
     function calculateRest(uint256 value) private view returns(uint256 rest){
-        rest = (value - ticketPrice); 
+        rest = value - ticketPrice; 
     }
 
     /// @dev refunds gas to a user if it exceeds lottery price
