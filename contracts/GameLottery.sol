@@ -17,14 +17,20 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
         mapping(uint256 => address) winner;
         mapping(uint256 => uint256 []) blockNumbers;
         mapping(uint256 => address []) participants;
+        mapping(uint256 => mapping(address => Counters.Counter)) userTickets;
+        mapping(uint256 => uint256) totalTicketsBought;
     }  
 
     enum LotteryStates { Active, Inactive }
 
     Lottery private lottery; 
-    LotteryStates lotteryState;
     uint256 private ticketPrice;
-    Counters.Counter private lotteryId; 
+    uint256 private maxTickets;
+    uint256 private maxUserTickets;  
+    
+    LotteryStates public lotteryState;
+    Counters.Counter public lotteryId;
+    Counters.Counter public totalTickets; 
 
     event ChangeLotteryState (LotteryStates indexed newState);
     event AnnounceWinner (address indexed winner);
@@ -40,9 +46,17 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
         require(lottery.winner[lotteryId._value] == msg.sender);
         _;
     }
+
+    modifier respectMaxTickets {
+        _;
+        require(lottery.userTickets[lotteryId._value][msg.sender]._value <= maxUserTickets, "Lottery: max number of tickets reached"); 
+        require(totalTickets._value <= maxTickets, "Lottery: max number of tickets reached");
+    }
     
     /// @notice initialize the first loterry
-    constructor (uint256 _ticketPrice, uint256 _deadline){
+    constructor (uint256 _ticketPrice, uint256 _deadline, uint256 _maxTickets, uint256 _maxUserTickets){
+        maxTickets = _maxTickets;
+        maxUserTickets = _maxUserTickets; 
         lotteryId._value = 0;
         ticketPrice = _ticketPrice * 10 ** 18;
         lotteryState = LotteryStates.Active; 
@@ -50,11 +64,13 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     } 
 
     /// @dev buy a lottery ticket with this function 
-    /// @notice lottery has to be Active for people to be able to ticket 
-    function buyTicket() public payable onlyActiveLottery {
+    /// @notice lottery has to be active for people to be able to ticket 
+    function buyTicket() public payable onlyActiveLottery respectMaxTickets {
         require(msg.value >= ticketPrice, "Lottery: not enough funds"); 
         lottery.participants[lotteryId._value].push(address(msg.sender));
         lottery.blockNumbers[lotteryId._value].push(block.number + 1 + lottery.blockNumbers[lotteryId._value].length);
+        totalTickets.increment(); 
+        lottery.userTickets[lotteryId._value][msg.sender].increment();
         if (msg.value > ticketPrice){
             uint256 rest = calculateRest(msg.value);
             refundRest(msg.sender, rest);
@@ -68,11 +84,14 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     }
 
     /// @dev actives the lottery 
-    /// @param deadline blocknumber at which lottery should be closed
-    function newLottery(uint256 deadline) external onlyOwner {
+    /// @param deadline time after lottery should be closed
+    function newLottery(uint256 deadline, uint256 _maxTickets, uint256 _maxUserTickets) external onlyOwner {
         require(lotteryState == LotteryStates.Inactive, "Lottery: lottery not inactive");
         lotteryState = LotteryStates.Active;
         lotteryId.increment();
+        maxTickets = _maxTickets;
+        maxUserTickets = _maxUserTickets;
+        totalTickets._value = 0;
         lottery.deadlines[lotteryId._value] = block.number + 1 + deadline;
         emit ChangeLotteryState(LotteryStates.Active);
     } 
@@ -85,6 +104,7 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
         uint256 winnerIndex = generateRandomNumber(participantIndex, blockNumberIndex);
         lottery.winner[lotteryId._value] = lottery.participants[lotteryId._value][winnerIndex];
         lotteryState = LotteryStates.Inactive;
+        lottery.totalTicketsBought[lotteryId._value] = totalTickets._value; 
         _asyncTransfer(lottery.winner[lotteryId._value], address(this).balance);
     }
 
