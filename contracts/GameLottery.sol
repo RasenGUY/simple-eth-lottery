@@ -110,7 +110,7 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
 
     /// @dev checks whether lottery isOver
     function isLotteryOver() public view returns (bool) {
-        if (block.timestamp * 1000 < lottery.deadlines[lotteryId._value] * 1000){
+        if (block.number < lottery.deadlines[lotteryId._value]){
             return false;
         }
         return true;
