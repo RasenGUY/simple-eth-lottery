@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     
-    using Counter for uint256;
+    using Counters for Counters.Counter;
     
     struct Lottery {
         mapping(uint256 => uint256) deadlines;
@@ -24,7 +24,7 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     Lottery private lottery; 
     LotteryStates lotteryState;
     uint256 private ticketPrice;
-    Counter private lotteryId; 
+    Counters.Counter private lotteryId; 
 
     event ChangeLotteryState (LotteryStates indexed newState);
     event AnnounceWinner (address indexed winner);
@@ -37,17 +37,25 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     }
 
     modifier onlyCurrentWinner {
-        require(lotery.winner[loteryId] == msg.sender);
+        require(lottery.winner[lotteryId._value] == msg.sender);
         _;
     }
+    
+    /// @notice initialize the first loterry
+    constructor (uint256 _ticketPrice, uint256 _deadline){
+        lotteryId._value = 0;
+        ticketPrice = _ticketPrice * 10 ** 18;
+        lotteryState = LotteryStates.Active; 
+        lottery.deadlines[lotteryId._value] = _deadline;
+    } 
 
     /// @dev buy a lottery ticket with this function 
     /// @notice lottery has to be Active for people to be able to ticket 
     function buyTicket() public payable onlyActiveLottery {
         require(msg.value >= ticketPrice, "Lottery: not enough funds"); 
-        lottery[lotteryId].participants.push(address(msg.sender));
-        lottery[lotteryId].blockNumbers.push(block.number + lottery[lotteryId].blockNumbers.lenght());
-        if (msg.value > lotteryPrice){
+        lottery.participants[lotteryId._value].push(address(msg.sender));
+        lottery.blockNumbers[lotteryId._value].push(block.number + 1 + lottery.blockNumbers[lotteryId._value].length);
+        if (msg.value > ticketPrice){
             uint256 rest = calculateRest(msg.value);
             refundRest(msg.sender, rest);
             emit Refund(msg.sender, rest);
@@ -60,12 +68,12 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     }
 
     /// @dev actives the lottery 
-    /// @param deadline timestamp for closing the lottery
+    /// @param deadline blocknumber at which lottery should be closed
     function newLottery(uint256 deadline) external onlyOwner {
-        require(lotteryState == lotteryStates.Inactive, "Lottery: lottery still ongoing");
+        require(lotteryState == LotteryStates.Inactive, "Lottery: lottery not inactive");
         lotteryState = LotteryStates.Active;
-        lotteryId.increment(); 
-        lottery.deadlines[lotteryId] = deadline;
+        lotteryId.increment();
+        lottery.deadlines[lotteryId._value] = block.number + 1 + deadline;
         emit ChangeLotteryState(LotteryStates.Active);
     } 
 
@@ -75,14 +83,14 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     function calculateWinner(uint256 participantIndex, uint256 blockNumberIndex) public 
     onlyActiveLottery {
         uint256 winnerIndex = generateRandomNumber(participantIndex, blockNumberIndex);
-        lottery.winner[lotteryId] = lottery.participants[lotteryId][winnerIndex];
-        lotteryState = lotteryState.Inactive;
-        _asyncTransfer(lottery.winner[lotteryId], address(this).balance);
+        lottery.winner[lotteryId._value] = lottery.participants[lotteryId._value][winnerIndex];
+        lotteryState = LotteryStates.Inactive;
+        _asyncTransfer(lottery.winner[lotteryId._value], address(this).balance);
     }
 
     /// @dev checks whether lottery isOver
     function isLotteryOver() public view returns (bool) {
-        if (block.timestamp * 1000 < lottery.deadlines[lotteryId] * 1000){
+        if (block.timestamp * 1000 < lottery.deadlines[lotteryId._value] * 1000){
             return false;
         }
         return true;
@@ -99,34 +107,35 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     /// @param participantIndex index for the participant array
     /// @param blockNumberIndex index for the blockNumber array
     function generateRandomNumber(
-        uint256 partipantIndex, 
+        uint256 participantIndex, 
         uint256 blockNumberIndex) 
-    private returns (uint indexWinner) {
-        address randomParticipant = lottery.participants[lotteryId][participantIndex];
-        bytes32 blHash = blockhash(lottery.blockNumbers[lotteryId][blockNumberIndex]); 
-        indexWinner = uint(keccack256(randomParticipant , blHash)) % participants.length(); 
+    private view returns (uint indexWinner) {
+        address randomParticipant = lottery.participants[lotteryId._value][participantIndex];
+        bytes32 blHash = blockhash(lottery.blockNumbers[lotteryId._value][blockNumberIndex]); 
+        indexWinner = uint(keccak256(abi.encodePacked(randomParticipant, blHash))) % lottery.participants[lotteryId._value].length; 
     }
 
     /// @dev calculate rest amount of eth to send back to users
     /// @param value amount the user will pay with
-    function calculateRest(value) private returns (uint256 rest){
-        rest = (value - lotteryPrice); 
+    function calculateRest(uint256 value) private view returns(uint256 rest){
+        rest = (value - ticketPrice); 
     }
 
     /// @dev refunds gas to a user if it exceeds lottery price
     /// @param to address to do a redund
     /// @param toRefund amount to refund 
-    function refundRest(address to, uint256 toRefund) private returns (bool) {
-        Address.sendValue(to, toRefund); 
+    function refundRest(address to, uint256 toRefund) private {
+        Address.sendValue(payable(to), toRefund); 
     }
 
     /// @dev allows winner of current lottery to withdraw payment
     /// @param payee address of recipient to whom amount will be sent
-    function withdrawPayments(address payee) public override onlyCurrentWinner nonReentrant {
+    function withdrawPayments(address payable payee) public override onlyCurrentWinner nonReentrant {
         require(lotteryState == LotteryStates.Inactive, "Lotery: lottery still ongoing");
-        _escrow.withdraw(payable(payee));
+        super.withdrawPayments(payee);
     }
 
     /// @dev if empty function calls to contract
     fallback() external payable {}
+    receive() external payable {}
 }
