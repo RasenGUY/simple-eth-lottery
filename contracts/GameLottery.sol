@@ -16,8 +16,10 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
         mapping(uint256 => uint256) startBlocks;
         mapping(uint256 => uint256) deadlines;
         mapping(uint256 => address) winner;
+        mapping(address => Counters.Counter) lotteriesWon; 
         mapping(uint256 => uint256 []) blockNumbers;
         mapping(uint256 => address []) participants;
+        mapping(uint256 => mapping(address => bool)) isParticipant;
         mapping(uint256 => mapping(address => Counters.Counter)) userTickets;
         mapping(uint256 => uint256) totalTicketsBought;
     }  
@@ -25,7 +27,6 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     enum LotteryStates { Active, Inactive }
 
     Lottery private lottery; 
-
     uint256 public maxTickets;
     uint256 public maxUserTickets;  
     uint256 public ticketPrice;
@@ -46,7 +47,7 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     }
 
     modifier onlyCurrentWinner {
-        require(lottery.winner[lotteryId._value] == msg.sender);
+        require(lottery.winner[lotteryId._value] == msg.sender, "Lottery: only winner can claim prize");
         _;
     }
 
@@ -56,6 +57,16 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
         require(totalTickets._value <= maxTickets, "Lottery: max number of tickets reached");
     }
     
+    modifier onlyParticipant {
+        require(lottery.isParticipant[lotteryId._value][msg.sender], "Lottery: caller not a participant");
+        _;
+    }
+
+    modifier respectDeadline {
+        require(block.number < lottery.deadlines[lotteryId._value], "Lottery: lottery reached deadline");
+        _;
+    }
+
     /// @notice initialize the first loterry
     constructor() {
         lotteryId._value = 0;
@@ -64,12 +75,13 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
 
     /// @dev buy a lottery ticket with this function 
     /// @notice lottery has to be active for people to be able to ticket 
-    function buyTicket() public payable onlyActiveLottery respectMaxTickets {
+    function buyTicket() public payable onlyActiveLottery respectMaxTickets respectDeadline {
         require(msg.value >= ticketPrice, "Lottery: not enough funds"); 
         lottery.participants[lotteryId._value].push(address(msg.sender));
         lottery.blockNumbers[lotteryId._value].push(block.number + 1 + lottery.blockNumbers[lotteryId._value].length);
         totalTickets.increment(); 
         lottery.userTickets[lotteryId._value][msg.sender].increment();
+        lottery.isParticipant[lotteryId._value][msg.sender] = true;
         if (msg.value > ticketPrice){
             uint256 rest = calculateRest(msg.value);
             refundRest(msg.sender, rest);
@@ -103,24 +115,40 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     } 
 
     /// @dev calculates the winner of the lottery
-    /// @param participantIndex index for blocknumbers list
-    /// @param blockNumberIndex index for partipants list
-    function calculateWinner(uint256 participantIndex, uint256 blockNumberIndex) public 
-    onlyActiveLottery {
+    /// @notice generates random number from random block number and random user address
+    /// @notice increments lotteries of a participant
+    /// @notice deactivates current lottery
+    /// @notice stores total tickets bought during current lottery round
+    /// @notice transfers prize to escrow
+    function calculateWinner() external 
+    onlyActiveLottery onlyParticipant returns (address _winner) {
         require(isLotteryOver(), "Lottery: lottery still running"); 
+        uint256 participantIndex = block.number % lottery.participants[lotteryId._value].length;
+        uint256 blockNumberIndex = block.number % lottery.blockNumbers[lotteryId._value].length;
         uint256 winnerIndex = generateRandomNumber(participantIndex, blockNumberIndex);
-        lottery.winner[lotteryId._value] = lottery.participants[lotteryId._value][winnerIndex]; // winner
+        _winner = lottery.participants[lotteryId._value][winnerIndex];
+        lottery.winner[lotteryId._value] = _winner; // winner
+        lottery.lotteriesWon[_winner].increment(); // increments winner count of lottery winner
         lotteryState = LotteryStates.Inactive;
         lottery.totalTicketsBought[lotteryId._value] = totalTickets._value; 
         _asyncTransfer(lottery.winner[lotteryId._value], address(this).balance);
         emit AnnounceWinner(lottery.participants[lotteryId._value][winnerIndex]); 
+        _winner = lottery.winner[lotteryId._value];
+    }
+
+    /// @dev returns the winner of the current lottery if there is one
+    function getWinner() external view returns (address _winner){
+        _winner = lottery.winner[lotteryId._value];
+    }
+
+    /// @dev returns the tickets owned by the caller of the function
+    function getTicketsOwned() external view returns (uint256 ticketsOwned) {
+        ticketsOwned = lottery.userTickets[lotteryId._value][msg.sender]._value;
     }
 
     /// @dev checks whether lottery isOver
     function isLotteryOver() public view returns (bool) {
-        if (block.number < lottery.deadlines[lotteryId._value]){
-            return false;
-        }
+        if (block.number < lottery.deadlines[lotteryId._value]) return false;
         return true;
     } 
 
@@ -174,6 +202,7 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
         super.withdrawPayments(payee);
     }
 
+    /// @dev get participants and blocknumbers
     /// @dev if empty function calls to contract
     fallback() external payable {}
     receive() external payable {}

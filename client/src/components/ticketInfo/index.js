@@ -1,0 +1,1 @@
+export { Info as TicketInfo } from "./Info";
