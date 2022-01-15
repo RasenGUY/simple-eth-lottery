@@ -4,14 +4,18 @@ import { CreateLottery } from '../components/actions';
 import { CalculateWinner } from '../components/actions';
 import { BuyTicket } from '../components/actions';
 import { ClaimPrize } from '../components/actions';
-import {useAppContext} from '../AppContext';
+import { useAppContext } from '../AppContext';
+
+
 
 export const ActionsContainer = ({setLoading}) => {
     const [admin, setAdmin] = useState(false);
     const { injectedProvider, setInjectedProvider } = useAppContext();
     const winner = false;
     const deadline = false; 
+
     
+
     useEffect( ()=> {
         if(injectedProvider && injectedProvider.selectedAddress == process.env.REACT_APP_ADMIN.toLowerCase()) {
             setAdmin(true);
