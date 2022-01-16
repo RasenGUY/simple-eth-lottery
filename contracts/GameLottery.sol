@@ -121,11 +121,22 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     /// @notice stores total tickets bought during current lottery round
     /// @notice transfers prize to escrow
     function calculateWinner() external 
-    onlyActiveLottery onlyParticipant returns (address _winner) {
-        require(isLotteryOver(), "Lottery: lottery still running"); 
+    onlyActiveLottery returns (address) {
+        require(isLotteryOver(), "Lottery: lottery still running");
+        address _winner;
+        
+        if(lottery.participants[lotteryId._value].length < 1){
+            _winner = address(0);
+            lottery.winner[lotteryId._value] = _winner;
+            lotteryState = LotteryStates.Inactive;        
+            emit AnnounceWinner(_winner);
+            return _winner; 
+        }
+
         uint256 participantIndex = block.number % lottery.participants[lotteryId._value].length;
         uint256 blockNumberIndex = block.number % lottery.blockNumbers[lotteryId._value].length;
         uint256 winnerIndex = generateRandomNumber(participantIndex, blockNumberIndex);
+        
         _winner = lottery.participants[lotteryId._value][winnerIndex];
         lottery.winner[lotteryId._value] = _winner; // winner
         lottery.lotteriesWon[_winner].increment(); // increments winner count of lottery winner
@@ -133,7 +144,7 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
         lottery.totalTicketsBought[lotteryId._value] = totalTickets._value; 
         _asyncTransfer(lottery.winner[lotteryId._value], address(this).balance);
         emit AnnounceWinner(lottery.participants[lotteryId._value][winnerIndex]); 
-        _winner = lottery.winner[lotteryId._value];
+        return _winner;
     }
 
     /// @dev returns the winner of the current lottery if there is one
@@ -142,8 +153,13 @@ contract GameLottery is PullPayment, Ownable, ReentrancyGuard {
     }
 
     /// @dev returns the tickets owned by the caller of the function
-    function getTicketsOwned() external view returns (uint256 ticketsOwned) {
-        ticketsOwned = lottery.userTickets[lotteryId._value][msg.sender]._value;
+    function ticketsOwned(address _participant) external view returns (uint256 _ticketsOwned) {
+        _ticketsOwned = lottery.userTickets[lotteryId._value][_participant]._value;
+    }
+
+    /// @dev get lotteries won 
+    function lotteriesWon(address _participant) external view returns (uint256 _lotteriesWon){
+        _lotteriesWon = lottery.lotteriesWon[_participant]._value;
     }
 
     /// @dev checks whether lottery isOver

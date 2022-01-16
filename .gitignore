@@ -1,0 +1,4 @@
+# ignore env, secret and node modules 
+.env
+node_modules/
+client/node_modules/
