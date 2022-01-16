@@ -1,9 +1,11 @@
 import React from 'react';
 import {Form, Button} from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
+import { callContract } from '../../helpers'; 
+const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
 
-export const CalculateWinner = ({setLoading}) => {
+export const CalculateWinner = ({setLoading, lottery}) => {
     
     const { 
         register, 
@@ -12,7 +14,14 @@ export const CalculateWinner = ({setLoading}) => {
         formState: { errors, isSubmitting, isSubmitted },
     } = useForm();
     
-    const onSubmit = async data => {console.log(data)}
+    const onSubmit = async d => {
+        setLoading(true);
+        const data = lottery.methods.calculateWinner().encodeABI();
+        const receipt = await callContract(lotteryAddress, data);
+        console.log(receipt);
+        // alert(`winner calculated: ${receipt}`);
+        setLoading(false);
+    }
     
     return (
         <Form onSubmit={handleSubmit(onSubmit)} className="mt-3"    >

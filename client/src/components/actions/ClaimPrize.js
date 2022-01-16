@@ -1,17 +1,30 @@
 import React from 'react';
 import { Form, Button, InputGroup, FormControl } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
+import { useToClaim } from '../../hooks';
+import { callContract } from '../../helpers';
+const utils = require('web3').utils;
+const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
-
-export const ClaimPrize = ({setLoading}) => {
+export const ClaimPrize = ({setLoading, winner, lottery}) => {
+    const toClaim = useToClaim(winner);
     const { 
         register, 
         handleSubmit, 
         watch,
         formState: { errors, isSubmitting, isSubmitted },
-    } = useForm();
+    } = useForm({
+        defaultValues: { winnerAddress: winner.toLowerCase()}
+    });
 
-    const onSubmit = async (data) => {console.log(data)}
+    const onSubmit = async ({winnerAddress}) => {
+        setLoading(true);
+        const data = lottery.methods.withdrawPayments(winnerAddress).encodeABI();
+        const { transactionHash } = await callContract(lotteryAddress, data);
+        alert(`sucessfully claimed ${toClaim} ETH txhash: ${transactionHash}`);
+        setLoading(false);
+        window.location.reload();
+    }
 
     return (
         <Form onSubmit={handleSubmit(onSubmit)} className="flex-fill mt-3" style={{margin: "0 auto 0 auto"}}>
@@ -20,12 +33,17 @@ export const ClaimPrize = ({setLoading}) => {
             </Form.Group>
             <Form.Group className="d-flex flex-column justify-content-between" style={{width: "100%"}}>
                 <InputGroup className="">
-                    <InputGroup.Text>Address Winner</InputGroup.Text>
-                    <FormControl type="text" aria-label={'address Winner'} placeholder="address of winner" {...register('addressWinner')}></FormControl>
+                    <InputGroup.Text>Winner Address</InputGroup.Text>
+                    <FormControl 
+                    type="text"
+                    value={winner.toLowerCase()}
+                    aria-label={'Winner Address'} 
+                    placeholder="winner address" 
+                    {...register('winnerAddress')} disabled></FormControl>
                 </InputGroup>
             </Form.Group>
             <Form.Group className="mt-3" style={{width: "100%"}}>
-                <Button variant="info" type="submit" style={{width: "inherit"}}>Claim</Button> 
+                <Button variant="info" type="submit" style={{width: "inherit"}} disabled={Math.round(toClaim) === 0 ? true : false}>Claim {!toClaim ? "...calulating" : String(toClaim) + " ETH"} </Button> 
             </Form.Group>
         </Form>
     )
