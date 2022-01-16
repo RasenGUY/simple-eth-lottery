@@ -7,15 +7,15 @@ export function usePublicVariables(setLoading) {
     const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
     const lotteryAbi = lotteryArtifact.abi;
     const lottery = useContract(lotteryAddress, lotteryAbi);
-    const [lotteryState, setLotteryState] = useState(lotteryState => Number(lotteryState) === 0 ? true : false );
+    const [isActive, setIsActive] = useState(s => Number(s) === 0 ? true : false );
     const [lotteryId, setLotteryId] = useState();
     const [isOver, setIsOver] = useState();
     
     useEffect(async () => {
-        lottery.methods.lotteryState().call().then(setLotteryState);
+        lottery.methods.lotteryState().call().then(setIsActive);
         lottery.methods.lotteryId().call().then(setLotteryId);
         lottery.methods.isLotteryOver().call().then(setIsOver);
     }, [setLoading]);
     
-    return [lotteryState, lotteryId, isOver];
+    return [isActive, lotteryId, isOver];
 }

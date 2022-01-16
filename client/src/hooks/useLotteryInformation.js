@@ -40,7 +40,7 @@ export function useLotteryInformation(id) {
         )
         lottery.methods.maxTickets().call().then(setMaximumTickets);
         lottery.methods.getWinner().call().then(setWinner);
-        
+
     }, [id]);
     
     return [ticketPrice, Number(start), Number(end), timeLeft, maximumTickets, winner && winner.toUpperCase()];

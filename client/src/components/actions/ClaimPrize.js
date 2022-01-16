@@ -43,7 +43,7 @@ export const ClaimPrize = ({setLoading, winner, lottery}) => {
                 </InputGroup>
             </Form.Group>
             <Form.Group className="mt-3" style={{width: "100%"}}>
-                <Button variant="info" type="submit" style={{width: "inherit"}} disabled={Math.round(toClaim) === 0 ? true : false}>Claim {!toClaim ? "...calulating" : String(toClaim) + " ETH"} </Button> 
+                <Button variant="info" type="submit" style={{width: "inherit"}} disabled={toClaim < 0.01 ? true : false}>Claim {!toClaim ? "...calulating" : String(toClaim) + " ETH"} </Button> 
             </Form.Group>
         </Form>
     )

@@ -17,9 +17,9 @@ export const CalculateWinner = ({setLoading, lottery}) => {
     const onSubmit = async d => {
         setLoading(true);
         const data = lottery.methods.calculateWinner().encodeABI();
-        const receipt = await callContract(lotteryAddress, data);
-        console.log(receipt);
-        // alert(`winner calculated: ${receipt}`);
+        const { transactionHash } = await callContract(lotteryAddress, data);
+        alert(`calculated winner successfully txhass: ${ transactionHash }`);
+        window.location.reload();
         setLoading(false);
     }
     
