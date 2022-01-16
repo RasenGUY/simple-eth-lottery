@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react';
-import { Container, Card } from 'react-bootstrap';
+import { Container } from 'react-bootstrap';
 import { LotteryInfo } from '../../components/lotteryInfo';
 import { TicketInfo } from '../../components/ticketInfo';
 import { usePublicVariables } from '../../hooks';
@@ -12,8 +12,10 @@ export const Home = () => {
     useEffect(() => {
         if(id && state && isOver){
             setLoading(false);
+        } else {
+            setLoading(true);
         }
-    }, [loading]);
+    }, [loading, id, state, isOver]);
     
     return (
         <Container className="d-flex align-items-center" style={{height: "100vh"}}>

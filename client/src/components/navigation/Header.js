@@ -9,6 +9,18 @@ const web3Modal = createWeb3Modal();
 export const Header = () => {
     const { injectedProvider, setInjectedProvider } = useAppContext(); 
     const [connected, setConnected] = useState();
+    const logout = async () => {
+        await web3Modal.clearCachedProvider();
+        if (injectedProvider && typeof injectedProvider.disconnect == "function") {
+          await injectedProvider.disconnect();
+        }
+        setConnected(false);
+        setInjectedProvider(undefined);
+        setTimeout(() => {
+            window.location.reload();
+        }, 1);
+    }
+
     
     const login = useCallback(async () => {
         var injected;
@@ -48,17 +60,6 @@ export const Header = () => {
         if(injectedProvider && Number(injectedProvider.chainId) !== 3) handleWrongChain(injectedProvider, setInjectedProvider, logout);
     }, [injectedProvider, login]);
 
-    const logout = async () => {
-        await web3Modal.clearCachedProvider();
-        if (injectedProvider && typeof injectedProvider.disconnect == "function") {
-          await injectedProvider.disconnect();
-        }
-        setConnected(false);
-        setInjectedProvider(undefined);
-        setTimeout(() => {
-            window.location.reload();
-        }, 1);
-    }
 
     function handleWrongChain (provider, setProvider, logout){
         console.log(new Error("wrong chainId switch to rinkeby network"));

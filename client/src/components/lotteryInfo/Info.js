@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card } from 'react-bootstrap';
 import { shortenAddress } from '../../utils';
-import { AddressZero } from '@ethersproject/constants';
 import { useLotteryInformation } from '../../hooks';
 
 export const Info = ({lotteryId}) => {

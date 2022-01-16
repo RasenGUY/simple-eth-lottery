@@ -1,6 +1,6 @@
-import React, {useState, useEffect} from 'react';
+import {useState, useEffect} from 'react';
 import { useProvider } from '../hooks'; 
-import { timeDifference, requestAction} from '../helpers';
+import { requestAction} from '../helpers';
 
 export function useBlockTime(deadline) { // returns number  
     const provider = useProvider();
@@ -9,12 +9,18 @@ export function useBlockTime(deadline) { // returns number
     const [blockTime, setBlockTime] = useState();
     const avgBlocks = 100;
     
-    useEffect(async () => {
-        if(!start) provider.eth.getBlockNumber().then(setStart);
-        if(start && !est){
+    useEffect(() => {
+        const getEst = async () => {
             let {result: {EstimateTimeInSec: EST}} = await requestAction('get_remaining_blocktime', start + avgBlocks);
-            setEst(EST);
+            setEst(EST)
         }
+
+        if(!start) provider.eth.getBlockNumber().then(setStart);
+        
+        if(start && !est){
+            getEst();
+        }
+        
         if(est) setBlockTime(est/avgBlocks);
     }, [deadline]);
     

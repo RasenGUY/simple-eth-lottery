@@ -8,10 +8,7 @@ const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 export const CalculateWinner = ({setLoading, lottery}) => {
     
     const { 
-        register, 
-        handleSubmit, 
-        watch,
-        formState: { errors, isSubmitting, isSubmitted },
+        handleSubmit
     } = useForm();
     
     const onSubmit = async d => {

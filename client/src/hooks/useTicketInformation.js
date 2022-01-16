@@ -1,6 +1,5 @@
-import React, {useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import { useContract } from './';
-import  { useProvider } from './'; 
 import lotteryArtifact from '../abis/GameLottery.json'; 
 
 export function useTicketInformation(id, address) {
@@ -12,7 +11,7 @@ export function useTicketInformation(id, address) {
     const [won, setWon] = useState();
     const [max, setMax] = useState();
 
-    useEffect(async ()=>{
+    useEffect(()=>{
         if(address){
             lottery.methods.ticketsOwned(address).call().then(setOwned);
             lottery.methods.lotteriesWon(address).call().then(setWon);

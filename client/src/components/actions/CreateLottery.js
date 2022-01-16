@@ -1,4 +1,4 @@
-import React, {useEffect, useState } from 'react'; 
+import React from 'react'; 
 import { Form, Button, InputGroup, FormControl } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { useBlockTime } from '../../hooks';
@@ -11,8 +11,7 @@ export const CreateLottery = ({setLoading, lottery}) => {
         register, 
         handleSubmit, 
         getValues,
-        watch,
-        formState: { errors, isSubmitting, isSubmitted },
+        watch
     } = useForm();
 
     const watchDeadline = watch('deadline', 0); 

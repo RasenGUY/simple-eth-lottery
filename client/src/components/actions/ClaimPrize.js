@@ -3,16 +3,13 @@ import { Form, Button, InputGroup, FormControl } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { useToClaim } from '../../hooks';
 import { callContract } from '../../helpers';
-const utils = require('web3').utils;
 const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
 export const ClaimPrize = ({setLoading, winner, lottery}) => {
     const toClaim = useToClaim(winner);
     const { 
         register, 
-        handleSubmit, 
-        watch,
-        formState: { errors, isSubmitting, isSubmitted },
+        handleSubmit
     } = useForm({
         defaultValues: { winnerAddress: winner.toLowerCase()}
     });

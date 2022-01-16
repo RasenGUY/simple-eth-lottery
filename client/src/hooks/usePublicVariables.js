@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useContract } from './';
-import  { useProvider } from './'; 
 import lotteryArtifact from '../abis/GameLottery.json'; 
 
 export function usePublicVariables(setLoading) {
@@ -11,7 +10,7 @@ export function usePublicVariables(setLoading) {
     const [lotteryId, setLotteryId] = useState();
     const [isOver, setIsOver] = useState();
     
-    useEffect(async () => {
+    useEffect(() => {
         lottery.methods.lotteryState().call().then(setIsActive);
         lottery.methods.lotteryId().call().then(setLotteryId);
         lottery.methods.isLotteryOver().call().then(setIsOver);

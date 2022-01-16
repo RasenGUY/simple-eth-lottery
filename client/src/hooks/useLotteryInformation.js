@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useContract } from './';
 import  { useProvider } from './'; 
 import lotteryArtifact from '../abis/GameLottery.json'; 
@@ -20,7 +20,7 @@ export function useLotteryInformation(id) {
     const [timeLeft, setTimeLeft] = useState();
     
     
-    useEffect(async () => {
+    useEffect(() => {
 
         lottery.methods.ticketPrice().call().then(setTicketPrice);
         lottery.methods.startBlock().call().then(

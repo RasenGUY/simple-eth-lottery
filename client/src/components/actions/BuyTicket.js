@@ -2,16 +2,12 @@ import React from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { callContract } from '../../helpers';
-const utils = require('web3').utils;
 const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
 export const BuyTicket = ({setLoading, disabled, lottery, price}) => {
 
     const { 
-        register, 
-        handleSubmit, 
-        watch,
-        formState: { errors, isSubmitting, isSubmitted },
+        handleSubmit
     } = useForm();
     const onSubmit = async d => {
         setLoading(true);

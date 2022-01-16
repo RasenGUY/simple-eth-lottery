@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useContract } from './';
-import  { useProvider } from './'; 
 import lotteryArtifact from '../abis/GameLottery.json'; 
 
 export function useToClaim(address) {
@@ -9,8 +8,8 @@ export function useToClaim(address) {
     const lottery = useContract(lotteryAddress, lotteryAbi);    
     const [toClaim, setToClaim] = useState();
 
-    useEffect(async () => {
-        lottery.methods.payments(address.toLowerCase()).call().then(setToClaim)
+    useEffect(() => {
+        lottery.methods.payments(address.toLowerCase()).call().then(setToClaim);
     }, [address]);
     
     return (Number(toClaim) * 1e-18).toFixed(2);

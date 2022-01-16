@@ -22,7 +22,7 @@ export const ActionsContainer = ({lotteryState, isOver, lotteryId}) => {
     useEffect( ()=> {
 
         if(injectedProvider){
-            if (injectedProvider.selectedAddress == process.env.REACT_APP_ADMIN.toLowerCase()) {
+            if (injectedProvider.selectedAddress === process.env.REACT_APP_ADMIN.toLowerCase()) {
                 setAdmin(true);
             } else {
                 setAdmin(false);
@@ -37,7 +37,7 @@ export const ActionsContainer = ({lotteryState, isOver, lotteryId}) => {
                 !loading ? 
                 <>
                     {
-                        (injectedProvider && (admin && isOver) || (admin && Number(lotteryId) === 0)) &&
+                        ((injectedProvider && admin && isOver) || (admin && Number(lotteryId) === 0)) &&
                         <CreateLottery
                         setLoading={setLoading} 
                         lottery={lottery} 

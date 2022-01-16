@@ -1,8 +1,7 @@
-import {Router, Routes, Route} from 'react-router-dom';
+import {Routes, Route} from 'react-router-dom';
 import { Home } from './pages/home';
 import { Header } from './components/navigation';
 import {Container} from 'react-bootstrap';
-import logo from './logo.svg';
 import './App.css';
 
 function App() {
