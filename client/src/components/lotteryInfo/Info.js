@@ -20,15 +20,15 @@ export const Info = ({lotteryId}) => {
                         <Card.Text><b>TimeLeft: </b><span style={{fontSize: '0.8rem'}}>
                             {
                                 !est ? 
-                                "...loading" : `less then ${est} 
+                                "...loading" : `less then 
                                     ${
                                         est >= 60 ? 
                                         est >= 24 * 60 ? 
                                         est >= 7 * 24 * 60 ? 
-                                        "ws" : 
-                                        "ds" : 
-                                        "hr" : 
-                                        "min"
+                                        `${Math.floor(est / (7* 24 * 60))} ws` : 
+                                        `${Math.floor(est / (24 * 60))} ds` : 
+                                        `${Math.floor(est / 60)} hrs` : 
+                                        `${Math.floor(est)} min`
                                     }`
                             }</span></Card.Text> 
                         : null

@@ -45,7 +45,7 @@ export const ActionsContainer = ({lotteryState, isOver, lotteryId}) => {
                         lotteryId={lotteryId}/>
                     }
                     {injectedProvider && !isOver ? <BuyTicket setLoading={setLoading} lottery={lottery} price={ticketPrice} /> : <BuyTicket setLoading={setLoading} disabled/>}
-                    {(injectedProvider && isOver && Number(lotteryId) !== 0 && !lotteryState) && <CalculateWinner setLoading={setLoading} lottery={lottery} />}
+                    {(injectedProvider && isOver && Number(lotteryId) !== 0 && lotteryState) && <CalculateWinner setLoading={setLoading} lottery={lottery} />}
                     {(injectedProvider && isOver && winner === user) && <ClaimPrize setLoading={setLoading} winner={winner} lottery={lottery}/>}
                 </>
                 : <h2>...Loading</h2>
