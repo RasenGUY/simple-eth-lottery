@@ -25,10 +25,10 @@ export const Info = ({lotteryId, reload}) => {
                                         est >= 60 ? 
                                         est >= 24 * 60 ? 
                                         est >= 7 * 24 * 60 ? 
-                                        `${Math.round(est / (7* 24 * 60))} ws` : 
-                                        `${Math.round(est / (24 * 60))} ds` : 
-                                        `${Math.round(est / 60)} hrs` : 
-                                        `${Math.round(est)} min`
+                                        `${Math.round(est / (7* 24 * 60))}w` : 
+                                        `${Math.round(est / (24 * 60))}d` : 
+                                        `${Math.round(est / 60)}h` : 
+                                        `${Math.round(est)}min`
                                     }`
                             }</span></Card.Text> 
                         : null
