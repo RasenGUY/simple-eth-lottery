@@ -4,7 +4,7 @@ import  { useProvider } from './';
 import lotteryArtifact from '../abis/GameLottery.json'; 
 import { requestAction } from '../helpers'
 
-export function useLotteryInformation(id) {
+export function useLotteryInformation(id, reload) {
     const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
     const lotteryAbi = lotteryArtifact.abi;
     const provider = useProvider(id);
@@ -41,7 +41,7 @@ export function useLotteryInformation(id) {
         lottery.methods.maxTickets().call().then(setMaximumTickets);
         lottery.methods.getWinner().call().then(setWinner);
 
-    }, [id]);
+    }, [id, reload]);
     
     return [ticketPrice, Number(start), Number(end), timeLeft, maximumTickets, winner && winner.toUpperCase()];
 }

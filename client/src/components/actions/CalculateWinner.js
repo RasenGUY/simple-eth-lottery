@@ -5,7 +5,7 @@ import { callContract } from '../../helpers';
 const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
 
-export const CalculateWinner = ({setLoading, lottery}) => {
+export const CalculateWinner = ({setLoading, lottery, setReload}) => {
     
     const { 
         handleSubmit
@@ -14,10 +14,15 @@ export const CalculateWinner = ({setLoading, lottery}) => {
     const onSubmit = async d => {
         setLoading(true);
         const data = lottery.methods.calculateWinner().encodeABI();
-        const { transactionHash } = await callContract(lotteryAddress, data);
-        alert(`calculated winner successfully txhass: ${ transactionHash }`);
-        window.location.reload();
-        setLoading(false);
+        try {
+            const { transactionHash } = await callContract(lotteryAddress, data);
+            alert(`calculated winner successfully txhass: ${ transactionHash }`);
+            setReload(reload => !reload);
+            setLoading(false);
+        } catch (e){
+            setReload(reload => !reload);
+            setLoading(false);
+        }
     }
     
     return (

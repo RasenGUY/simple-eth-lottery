@@ -10,7 +10,7 @@ import { useContract, useLotteryInformation } from '../hooks';
 
 const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
-export const ActionsContainer = ({lotteryState, isOver, lotteryId}) => {
+export const ActionsContainer = ({lotteryActive, isOver, lotteryId, reload, setReload}) => {
     const [admin, setAdmin] = useState(false);
     const [user, setUser] = useState();
     const {injectedProvider, setInjectedProvider } = useAppContext();
@@ -37,16 +37,40 @@ export const ActionsContainer = ({lotteryState, isOver, lotteryId}) => {
                 !loading ? 
                 <>
                     {
-                        ((injectedProvider && admin && isOver) || (admin && Number(lotteryId) === 0)) &&
+                        ((injectedProvider && admin && (isOver && !lotteryActive)) || (admin && Number(lotteryId) === 0)) &&
                         <CreateLottery
                         setLoading={setLoading} 
                         lottery={lottery} 
-                        lotteryState={lotteryState} 
-                        lotteryId={lotteryId}/>
+                        lotteryId={lotteryId}
+                        setReload={setReload}
+                        />
                     }
-                    {injectedProvider && !isOver ? <BuyTicket setLoading={setLoading} lottery={lottery} price={ticketPrice} /> : <BuyTicket setLoading={setLoading} disabled/>}
-                    {(injectedProvider && isOver && Number(lotteryId) !== 0 && lotteryState) && <CalculateWinner setLoading={setLoading} lottery={lottery} />}
-                    {(injectedProvider && isOver && winner === user) && <ClaimPrize setLoading={setLoading} winner={winner} lottery={lottery}/>}
+                    {
+                        injectedProvider && !isOver 
+                        ? <BuyTicket 
+                        setLoading={setLoading} 
+                        lottery={lottery} 
+                        price={ticketPrice}
+                        setReload={setReload}
+                        /> 
+                        : <BuyTicket setLoading={setLoading} reload={reload} disabled/>}
+                    {
+                        (injectedProvider && Number(lotteryId) !== 0 && (isOver || !lotteryActive)) && 
+                        <CalculateWinner 
+                        setLoading={setLoading} 
+                        lottery={lottery} 
+                        setReload={setReload}
+                        />
+                    }
+                    {
+                        (injectedProvider && isOver && winner === user) && 
+                        <ClaimPrize 
+                        setLoading={setLoading} 
+                        winner={winner} 
+                        lottery={lottery}
+                        setReload={setReload}
+                        />
+                    }
                 </>
                 : <h2>...Loading</h2>
             }

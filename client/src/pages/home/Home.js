@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react';
-import { Container } from 'react-bootstrap';
+import { Container, Button } from 'react-bootstrap';
 import { LotteryInfo } from '../../components/lotteryInfo';
 import { TicketInfo } from '../../components/ticketInfo';
 import { usePublicVariables } from '../../hooks';
@@ -7,7 +7,8 @@ import { ActionsContainer } from '../../containers/ActionsContainer';
 
 export const Home = () => {
     const [loading, setLoading] = useState(true);
-    const [state, id, isOver] = usePublicVariables(setLoading);
+    const [reload, setReload] = useState();
+    const [state, id, isOver] = usePublicVariables(setLoading, reload);
     
     useEffect(() => {
         if(id && state && isOver){
@@ -15,14 +16,15 @@ export const Home = () => {
         } else {
             setLoading(true);
         }
-    }, [loading, id, state, isOver]);
-    
+    }, [loading, id, state, isOver, reload]);
+
+    // console.log(reload)
     return (
         <Container className="d-flex align-items-center" style={{height: "100vh"}}>
             <Container fluid className="d-flex flex-row justify-content-between" style={{position: "relative"}}>
-                <LotteryInfo lotteryId={id} />
-                <ActionsContainer lotteryState={state} isOver={isOver} lotteryId={id} />
-                <TicketInfo lotteryId={id}/>
+                <LotteryInfo lotteryId={id} reload={reload}/>
+                <ActionsContainer lotteryActive={state} isOver={isOver} lotteryId={id} setReload={setReload} reload={reload} />
+                <TicketInfo lotteryId={id} reload={reload}/>
             </Container>
         </Container>
     )

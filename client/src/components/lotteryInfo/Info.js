@@ -3,8 +3,8 @@ import { Card } from 'react-bootstrap';
 import { shortenAddress } from '../../utils';
 import { useLotteryInformation } from '../../hooks';
 
-export const Info = ({lotteryId}) => {
-    const [price, start, end, est, max, winner] = useLotteryInformation(lotteryId);
+export const Info = ({lotteryId, reload}) => {
+    const [price, start, end, est, max, winner] = useLotteryInformation(lotteryId, reload);
 
     return (
         <div className="flex-fill">

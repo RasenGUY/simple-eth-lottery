@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { callContract } from '../../helpers';
 const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
-export const BuyTicket = ({setLoading, disabled, lottery, price}) => {
+export const BuyTicket = ({setLoading, disabled, lottery, price, setReload}) => {
 
     const { 
         handleSubmit
@@ -12,10 +12,15 @@ export const BuyTicket = ({setLoading, disabled, lottery, price}) => {
     const onSubmit = async d => {
         setLoading(true);
         const data = lottery.methods.buyTicket().encodeABI();
-        const { transactionHash } = await callContract(lotteryAddress, data, price);
-        alert(`ticket sucessfully bought txhash: ${transactionHash}`);
-        setLoading(false);
-        window.location.reload();
+        try {
+            const { transactionHash } = await callContract(lotteryAddress, data, price);
+            alert(`ticket sucessfully bought txhash: ${transactionHash}`);
+            setLoading(false);
+            setReload(reload => !reload);
+        } catch (e){
+            setLoading(false);
+            setReload(reload => !reload);
+        }
     }
     
     return (

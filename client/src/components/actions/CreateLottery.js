@@ -6,7 +6,7 @@ import { callContract } from '../../helpers';
 const utils = require('web3').utils
 const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
-export const CreateLottery = ({setLoading, lottery}) => {
+export const CreateLottery = ({setLoading, lottery, setReload}) => {
     const { 
         register, 
         handleSubmit, 
@@ -29,10 +29,10 @@ export const CreateLottery = ({setLoading, lottery}) => {
         try { 
             const { transactionHash } = await callContract(lotteryAddress, data);
             alert(`Created New Lottery txhash: ${transactionHash}`);
-            window.location.reload();
+            setReload(reload => !reload);
             setLoading(false);
         } catch (e){
-            window.location.reload();
+            setReload(reload => !reload);
             setLoading(false);
         }
     }

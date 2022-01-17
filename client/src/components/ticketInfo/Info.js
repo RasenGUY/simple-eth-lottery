@@ -3,10 +3,10 @@ import { Card } from 'react-bootstrap';
 import { useAppContext } from '../../AppContext';
 import { useTicketInformation } from '../../hooks';
 
-export const Info = ({lotteryId}) => {
+export const Info = ({lotteryId, reload}) => {
     const { injectedProvider, setInjectedProvider} = useAppContext();
     const [user, setUser] = useState();
-    const [owned, won, max] = useTicketInformation(lotteryId, user);
+    const [owned, won, max] = useTicketInformation(lotteryId, user, reload);
     
     useEffect(()=>{
         if(injectedProvider){

@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import { useContract } from './';
 import lotteryArtifact from '../abis/GameLottery.json'; 
 
-export function useTicketInformation(id, address) {
+export function useTicketInformation(id, address, reload) {
     const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
     const lotteryAbi = lotteryArtifact.abi;
     const lottery = useContract(lotteryAddress, lotteryAbi);
@@ -17,7 +17,7 @@ export function useTicketInformation(id, address) {
             lottery.methods.lotteriesWon(address).call().then(setWon);
         }
         lottery.methods.maxUserTickets().call().then(setMax);
-    }, [id, address]);
+    }, [id, address, reload]);
 
     return [owned, won, max];
 }

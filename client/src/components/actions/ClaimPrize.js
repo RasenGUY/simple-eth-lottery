@@ -5,7 +5,7 @@ import { useToClaim } from '../../hooks';
 import { callContract } from '../../helpers';
 const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
-export const ClaimPrize = ({setLoading, winner, lottery}) => {
+export const ClaimPrize = ({setLoading, winner, lottery, setReload}) => {
     const toClaim = useToClaim(winner);
     const { 
         register, 
@@ -17,10 +17,15 @@ export const ClaimPrize = ({setLoading, winner, lottery}) => {
     const onSubmit = async ({winnerAddress}) => {
         setLoading(true);
         const data = lottery.methods.withdrawPayments(winnerAddress).encodeABI();
-        const { transactionHash } = await callContract(lotteryAddress, data);
-        alert(`sucessfully claimed ${toClaim} ETH txhash: ${transactionHash}`);
-        setLoading(false);
-        window.location.reload();
+        try {
+            const { transactionHash } = await callContract(lotteryAddress, data);
+            alert(`sucessfully claimed ${toClaim} ETH txhash: ${transactionHash}`);
+            setReload(reload => !reload);
+            setLoading(false);
+        } catch (e){
+            setReload(reload => !reload);
+            setLoading(false);
+        }
     }
 
     return (
