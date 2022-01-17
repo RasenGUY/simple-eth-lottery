@@ -5,7 +5,7 @@ import { useLotteryInformation } from '../../hooks';
 
 export const Info = ({lotteryId, reload}) => {
     const [price, start, end, est, max, winner] = useLotteryInformation(lotteryId, reload);
-
+    console.log(est / (24 * 60))
     return (
         <div className="flex-fill">
             <Card className="text-center" style={{padding: '2rem 0rem'}}>
@@ -25,10 +25,10 @@ export const Info = ({lotteryId, reload}) => {
                                         est >= 60 ? 
                                         est >= 24 * 60 ? 
                                         est >= 7 * 24 * 60 ? 
-                                        `${Math.floor(est / (7* 24 * 60))} ws` : 
-                                        `${Math.floor(est / (24 * 60))} ds` : 
-                                        `${Math.floor(est / 60)} hrs` : 
-                                        `${Math.floor(est)} min`
+                                        `${Math.round(est / (7* 24 * 60))} ws` : 
+                                        `${Math.round(est / (24 * 60))} ds` : 
+                                        `${Math.round(est / 60)} hrs` : 
+                                        `${Math.round(est)} min`
                                     }`
                             }</span></Card.Text> 
                         : null
