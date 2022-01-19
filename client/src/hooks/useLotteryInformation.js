@@ -32,9 +32,9 @@ export function useLotteryInformation(id, reload) {
             });
         lottery.methods.deadline().call().then(e => 
             requestAction("get_remaining_blocktime", Number(e)).then(({result: {EstimateTimeInSec: est}}) => {
-                let end = new Date(Date.now() + 1000 * Number(est));
                 let start = new Date(Date.now());  
-                let diff = Math.round((end.getTime() - start.getTime()) / 1000 / 60)
+                let end = new Date(start.getTime() + 1000 * Number(est));
+                let diff = Math.round((end.getTime() - start.getTime()) * ((1/6) * 1e-5)); // to minutes
                 setTimeLeft(diff)                
             })
         )
