@@ -36,7 +36,7 @@ export function useLotteryInformation(id, reload) {
         }
         if (mounted){
 
-            if(blockTime && Object.entries(lotteryInfo).length == 0){
+            if(blockTime){
                 getLotteryInfo();
             }
         }
