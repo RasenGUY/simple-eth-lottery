@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect } from 'react';
 import { Container } from 'react-bootstrap';
 import { CreateLottery } from '../components/actions';
 import { CalculateWinner } from '../components/actions';
@@ -14,22 +14,24 @@ export const ActionsContainer = ({lotteryActive, isOver, lotteryId, reload, setR
     const [admin, setAdmin] = useState(false);
     const [user, setUser] = useState();
     const {injectedProvider, setInjectedProvider } = useAppContext();
-    const [ticketPrice, , , , , winner] = useLotteryInformation(lotteryId); 
-
+    const {ticketPrice, winner} = useLotteryInformation(lotteryId); 
     const lottery = useContract(lotteryAddress, lotteryArtifact.abi);
-    const [loading, setLoading] = useState()
+    const [loading, setLoading] = useState();
 
-    useEffect( ()=> {
-
-        if(injectedProvider){
-            if (injectedProvider.selectedAddress === process.env.REACT_APP_ADMIN.toLowerCase()) {
-                setAdmin(true);
-            } else {
-                setAdmin(false);
+    useEffect(()=> {
+        let mounted = true; 
+        if (mounted){
+            if(injectedProvider){
+                if (injectedProvider.selectedAddress === process.env.REACT_APP_ADMIN.toLowerCase()) {
+                    setAdmin(true);
+                } else {
+                    setAdmin(false);
+                }
+                setUser(injectedProvider.selectedAddress.toUpperCase())
             }
-            setUser(injectedProvider.selectedAddress.toUpperCase())
-        } 
-
+        }
+        return () => mounted = false;
+        
     }, [injectedProvider, setInjectedProvider]);
     return (
         <Container style={{width: "60%"}}>
@@ -55,6 +57,7 @@ export const ActionsContainer = ({lotteryActive, isOver, lotteryId, reload, setR
                         /> 
                         : <BuyTicket setLoading={setLoading} reload={reload} disabled/>}
                     {
+                        !lotteryId ? null :
                         (injectedProvider && Number(lotteryId) !== 0 && (isOver || !lotteryActive)) && 
                         <CalculateWinner 
                         setLoading={setLoading} 

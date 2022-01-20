@@ -9,8 +9,8 @@ import Web3Modal from 'web3modal';
 
 // keys @ethersproject/contracts
 const INFURA_ID = process.env.REACT_APP_INFURA_ROPSTEN_ID;
-const PORTIS_ID = process.env.PORTIS_ID;
-const FORTMATIC_KEY = process.env.FORTMATIC_KEY; 
+const PORTIS_ID = process.env.REACT_APP_PORTIS_ID;
+const FORTMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY; 
 
 
 // Coinbase walletLink init
@@ -18,8 +18,11 @@ const walletLink = new WalletLink({
     appName: "coinbase",
 });
 
+const providers = { infura: "https://ropsten.infura.io/v3/", alchemy: "https://eth-ropsten.alchemyapi.io/v2/"};
+const IDS = { infura: process.env.REACT_APP_INFURA_ROPSTEN_ID, alchemy: process.env.REACT_APP_ALCHEMY_ROPSTEN_ID};
+
 // WalletLink provider
-const walletLinkProvider = walletLink.makeWeb3Provider(`https://roptsen.infura.io/v3/${INFURA_ID}`, 1);
+const walletLinkProvider = walletLink.makeWeb3Provider(`${providers[process.env.REACT_APP_PROVIDER]}${IDS[process.env.REACT_APP_PROVIDER]}`, 1);
 
 export const createWeb3Modal = () => new Web3Modal({ 
   cacheProvider: true, // optional
@@ -35,7 +38,7 @@ export const createWeb3Modal = () => new Web3Modal({
           42: `https://kovan.infura.io/v3/${INFURA_ID}`,
           100: "https://dai.poa.network", // xDai
           4: `https://rinkeby.infura.io/v3/${INFURA_ID}`,
-          3: `https://roptsen.infura.io/v3/${INFURA_ID}`
+          3: `${providers[process.env.REACT_APP_PROVIDER]}${IDS[process.env.REACT_APP_PROVIDER]}`
         },
       },
 

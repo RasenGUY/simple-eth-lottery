@@ -22,9 +22,7 @@ const AppContext = createContext(initialContext);
 
 export const useAppContext = () => React.useContext(AppContext);
 export const AppContextProvider = ({ children }) => {
-  
   const [store, dispatch] = useReducer(appReducer, initialContext);
-  
   const contextValue = {
     injectedProvider: store.injectedProvider,
     setInjectedProvider: provider => {

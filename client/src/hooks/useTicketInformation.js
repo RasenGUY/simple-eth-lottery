@@ -6,18 +6,22 @@ export function useTicketInformation(id, address, reload) {
     const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
     const lotteryAbi = lotteryArtifact.abi;
     const lottery = useContract(lotteryAddress, lotteryAbi);
-
-    const [owned, setOwned] = useState();
-    const [won, setWon] = useState();
-    const [max, setMax] = useState();
-
+    const [ticketInfo, setTicketInfo] = useState({});
     useEffect(()=>{
-        if(address){
-            lottery.methods.ticketsOwned(address).call().then(setOwned);
-            lottery.methods.lotteriesWon(address).call().then(setWon);
+        let mounted = true; 
+        const getTicketInfo = async () => {
+            await Promise.all([
+                lottery.methods.ticketsOwned(address).call().then(owned => setTicketInfo(s => ({...s, owned: owned}))),
+                lottery.methods.lotteriesWon(address).call().then(won => setTicketInfo(s => ({...s, won: won}))),
+                lottery.methods.maxUserTickets().call().then(max => setTicketInfo(s => ({...s, max: max})))
+            ]);
         }
-        lottery.methods.maxUserTickets().call().then(setMax);
-    }, [id, address, reload]);
-
-    return [owned, won, max];
+        if (mounted){
+            if(address){
+                getTicketInfo();
+            }
+        }
+        return () => mounted = false;
+    }, [id, address, reload, setTicketInfo]);
+    return ticketInfo;
 }

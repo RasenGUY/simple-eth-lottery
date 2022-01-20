@@ -11,11 +11,15 @@ export const Home = () => {
     const [state, id, isOver] = usePublicVariables(setLoading, reload);
     
     useEffect(() => {
-        if(id && state && isOver){
-            setLoading(false);
-        } else {
-            setLoading(true);
+        let mounted = true;
+        if(mounted){
+            if(id && state && isOver){
+                setLoading(false);
+            } else {
+                setLoading(true);
+            }
         }
+        return () => mounted = false;
     }, [loading, id, state, isOver, reload]);
 
     // console.log(reload)

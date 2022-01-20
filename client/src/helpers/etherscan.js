@@ -27,6 +27,7 @@ export async function requestAction(type, payload){
             } catch (e){
                 return e;
             }
+            
         default:
             try {
                 res = await axios.get(payload);

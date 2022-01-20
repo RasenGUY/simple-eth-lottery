@@ -9,11 +9,19 @@ export function usePublicVariables(setLoading, reload) {
     const [isActive, setIsActive] = useState();
     const [lotteryId, setLotteryId] = useState();
     const [isOver, setIsOver] = useState();
-    
     useEffect(() => {
-        lottery.methods.lotteryState().call().then(s => setIsActive(() => Number(s) === 0 ? true : false));
-        lottery.methods.lotteryId().call().then(setLotteryId);
-        lottery.methods.isLotteryOver().call().then(setIsOver);
+        let mount = true;
+        const getPublicInfo = async () => {
+            await Promise.all([
+                lottery.methods.lotteryState().call().then(s => setIsActive(() => Number(s) === 0 ? true : false)),
+                lottery.methods.lotteryId().call().then(setLotteryId),
+                lottery.methods.isLotteryOver().call().then(setIsOver),
+            ]);
+        }
+        if(mount){
+            getPublicInfo();
+        }
+        return () => mount = false;
     }, [setLoading, reload]);
     
     return [isActive, lotteryId, isOver];

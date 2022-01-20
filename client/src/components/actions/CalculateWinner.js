@@ -4,13 +4,10 @@ import { useForm } from 'react-hook-form';
 import { callContract } from '../../helpers'; 
 const lotteryAddress = process.env.REACT_APP_GAMELOTTERY_ADDRESS;
 
-
 export const CalculateWinner = ({setLoading, lottery, setReload}) => {
-    
     const { 
         handleSubmit
     } = useForm();
-    
     const onSubmit = async d => {
         setLoading(true);
         const data = lottery.methods.calculateWinner().encodeABI();

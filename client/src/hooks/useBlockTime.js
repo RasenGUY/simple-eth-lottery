@@ -1,28 +1,34 @@
 import {useState, useEffect} from 'react';
 import { useProvider } from '../hooks'; 
-import { requestAction} from '../helpers';
+import { range } from '../helpers';
 
-export function useBlockTime(deadline) { // returns number  
+export function useBlockTime(deadline) {
     const provider = useProvider();
-    const [start, setStart] = useState();
-    const [est, setEst] = useState(); 
     const [blockTime, setBlockTime] = useState();
-    const avgBlocks = 100;
     
     useEffect(() => {
-        const getEst = async () => {
-            let {result: {EstimateTimeInSec: EST}} = await requestAction('get_remaining_blocktime', start + avgBlocks);
-            setEst(EST)
+        let mounted = true;
+        let blocks = 250; 
+
+        const getAverageBlockTime = async n => {
+            const curr = await provider.eth.getBlockNumber(); 
+            const numbers = range(Number(curr - n), Number(curr + 1), 1);
+            const blocks = await Promise.all(numbers.map(n => provider.eth.getBlock(n)));
+            const dates = blocks.map(({timestamp}) => new Date(timestamp * 1000));
+            const differences = dates.map((date, index, dates) => index === dates.length - 1 ? undefined : (dates[index + 1] - date) / 1000);
+            const sum = differences.slice(1, n).reduce((p, c) => p + c, differences[0]);
+            return sum / differences.length - 1;
+        };
+
+        if (mounted) {            
+            if(!blockTime){
+                getAverageBlockTime(blocks).then(setBlockTime);
+            }
         }
 
-        if(!start) provider.eth.getBlockNumber().then(setStart);
-        
-        if(start && !est){
-            getEst();
-        }
-        
-        if(est) setBlockTime(est/avgBlocks);
-    }, [deadline]);
+        return () => mounted = false;
+
+    }, [deadline, blockTime]);
     
     return blockTime; 
 }

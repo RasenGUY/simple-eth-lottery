@@ -13,7 +13,7 @@ export const BuyTicket = ({setLoading, disabled, lottery, price, setReload}) => 
         setLoading(true);
         const data = lottery.methods.buyTicket().encodeABI();
         try {
-            const { transactionHash } = await callContract(lotteryAddress, data, price);
+            const { transactionHash } = await callContract(lotteryAddress, data, String(price * 1e18));
             alert(`ticket sucessfully bought txhash: ${transactionHash}`);
             setLoading(false);
             setReload(reload => !reload);
